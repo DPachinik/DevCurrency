@@ -1,14 +1,78 @@
 import { BsSearch } from 'react-icons/bs'
 import styles from './home.module.css'
-import { Link, useNavigate } from 'react-router-dom'
-import { useState, type FormEvent } from 'react'
+import {  Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
 
+
+interface CoinsProps{
+    id:string;
+    name:string;
+    symbol:string;
+    priceUsd:string;
+    vwap24Hr:string;
+    changePercent24Hr:string;
+    rank:string;
+    supply:string;
+    maxSupply:string;
+    marketCapUsd:string;
+    volumeUsd24Hr:string;
+    explorer:string;
+    formatedPrice?:string;
+    formaterdMarket?:string;
+    formatedVolume?:string;
+}
+
+interface DataProps{
+    data:CoinsProps[];
+}
 
 export function Home(){
 
-    const [input, setInput] = useState('')
+    const [input, setInput] = useState('');
+
+    const [coins, setCoins]= useState<CoinsProps[]>([]);
+
+    const [offset,setOffset] =useState(0);
 
     const navigate = useNavigate();
+
+    useEffect(()=>{
+        getData();
+    },[offset])
+
+    async function getData(){
+        fetch(`https://rest.coincap.io/v3/assets?limit=10&offset=${offset}&apiKey=c5e3d82fa6795de9037e3cf25ae447ddf2a892a973dd9d3ea7c0b2c771750637`)
+        .then(response =>response.json())
+        .then((data:DataProps)=>{
+            const coinsData = data.data;
+
+            const price = Intl.NumberFormat("en-US",{
+                style:"currency",
+                currency:"USD"
+            })
+
+            const priceCompact = Intl.NumberFormat("en-US",{
+                style: "currency",
+                currency:"USD",
+                notation:"compact"
+            })
+
+            const formatedResult = coinsData.map((item)=>{
+                const formated = {
+                    ...item,
+                    formatedPrice:price.format(Number(item.priceUsd)),
+                    formaterdMarket:priceCompact.format(Number(item.marketCapUsd)),
+                    formatedVolume:priceCompact.format(Number(item.volumeUsd24Hr))
+                }
+                return formated
+            })
+            const listCoins = [...coins, ...formatedResult]
+            setCoins(listCoins);
+        })
+
+
+        
+    }
 
     function handleSubmit(e:FormEvent){
         e.preventDefault()
@@ -21,7 +85,11 @@ export function Home(){
     }
 
     function handleMoreclick(){
-        alert('hola')
+        if(offset === 0 ){
+            setOffset(10);
+            return
+        }
+        setOffset(offset+10);
     }
 
     return(
@@ -34,13 +102,13 @@ export function Home(){
                 onChange={(e)=>setInput(e.target.value)}
                 />
                 
-                <button type="submit">
+                <button type="submit" className={styles.buttonSearch}>
                     <BsSearch size={30} color='#ffff' />
                 </button>
             </form>
 
             <table>
-                <caption>Top criptomonedas del mercado</caption>
+                <caption>TOP CRIPTOMONEDAS DEL MERCADO</caption>
 
                 <thead>
                     <tr>
@@ -53,27 +121,33 @@ export function Home(){
                 </thead>
 
                 <tbody id='tbody'>
-                    <tr className={styles.tr}>
+                    {coins.length >0 && coins.map((item)=>(
+                        <tr className={styles.tr}>
                         <td className={styles.tdlabel} data-label='Moneda'>
                             <div className={styles.name}>
+                                <img src={`https://assets.coincap.io/assets/icons/${item.symbol.toLocaleLowerCase()}@2x.png`} 
+                                alt='icono de moneda'
+                                className={styles.img}
+                                />
                                 <Link to='/detail/bitcoin'>
-                                    <span>Bitcoin</span> | BT
+                                    <span>{item.name}</span> | {item.symbol}
                                 </Link>
                             </div>
                         </td>
                         <td className={styles.tdlabel} data-label='Valor Mercado'>
-                            1T
+                            {item.formaterdMarket}
                         </td>
                         <td className={styles.tdlabel} data-label='Precio'>
-                            8.000
+                            {item.formatedPrice}
                         </td>
                         <td className={styles.tdlabel} data-label='Volumen'>
-                            2B
+                            {item.formatedVolume}
                         </td>
-                        <td className={styles.tdProfit} data-label='Variación 24h'>
-                            <span>1.20</span>
+                        <td className={Number(item.changePercent24Hr) > 0?`${styles.tdProfit}`:`${styles.tdLoss}`} data-label='Variación 24h'>
+                            <span>{Number(item.changePercent24Hr).toFixed(2)}</span>
                         </td>
                     </tr>
+                    ))}
                 </tbody>
 
 
