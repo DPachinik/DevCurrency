@@ -1,6 +1,6 @@
 import { useEffect, useState} from 'react'
 import {useParams, useNavigate} from 'react-router-dom'
-import {type CoinsProps } from '../home'
+import type { CoinsProps } from '../home'
 import styles from './detail.module.css'
 
 interface ResponseData{

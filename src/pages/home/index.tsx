@@ -4,7 +4,7 @@ import {  Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState, type FormEvent } from 'react'
 
 
-interface CoinsProps{
+export interface CoinsProps{
     id:string;
     name:string;
     symbol:string;
@@ -122,14 +122,14 @@ export function Home(){
 
                 <tbody id='tbody'>
                     {coins.length >0 && coins.map((item)=>(
-                        <tr className={styles.tr}>
+                        <tr className={styles.tr} key={item.id}>
                         <td className={styles.tdlabel} data-label='Moneda'>
                             <div className={styles.name}>
                                 <img src={`https://assets.coincap.io/assets/icons/${item.symbol.toLocaleLowerCase()}@2x.png`} 
                                 alt='icono de moneda'
                                 className={styles.img}
                                 />
-                                <Link to='/detail/bitcoin'>
+                                <Link to={`/detail/${item.id}`}>
                                     <span>{item.name}</span> | {item.symbol}
                                 </Link>
                             </div>
